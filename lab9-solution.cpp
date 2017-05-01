@@ -7,6 +7,7 @@
 
 #include "lab10.h"
 #include <iostream>
+#include <string>
 #include <time.h>       /* time */
 
 /**
@@ -38,51 +39,49 @@ bool initializeGame(Game* game, int width, int height, int level) {
 	 * Reminder: What is width and height are both negative numbers
 	 * If the space is not sufficient, return false.
 	 */
-	//	if (width * height < 3 * level + 1 || width < -1) {
-	//		return false;
-	//	}
-	//
-	//	// Initialize the game parameters (width, height, level, moveCount and touchWithRussianAgentsCount)
-	//	game->width = width;
-	//	game->height = height;
-	//	game->level = level;
-	//	game->moveCount = 0;
-	//	game->touchWithRussianAgentsCount = 0;
-	//	game->FBIHidingProbability = 0;
-	//
-	//
-	//	// Initialize trump at the bottom-left corner
-	//	game->trump.x = 0;
-	//	game->trump.y = game->height - 1;
-	//
-	//
-	//
-	//	game->russianAgents = new PersonPosition*[level];
-	//	game->FBI = new PersonPosition[level];
-	//	game->media = new PersonPosition[level];
-	//
-	//	// Initialize ALL russianAgents, media and FBI to be of null position
-	//	for (int i = 0; i < game->level; ++i) {
-	//		game->russianAgents[i] = new PersonPosition;
-	//		game->russianAgents[i]->x = NULL_POSITION;
-	//		game->russianAgents[i]->y = NULL_POSITION;
-	//		game->media[i].x = NULL_POSITION;
-	//		game->media[i].y = NULL_POSITION;
-	//		game->FBI[i].x = NULL_POSITION;
-	//		game->FBI[i].y = NULL_POSITION;
-	//	}
-	//
-	//	// Assign random position by calling generatePositionWithoutPerson(...)
-	//	for (int i = 0; i < game->level; ++i) {
-	//		*game->russianAgents[i] = generatePositionWithoutPerson(game);
-	//		game->media[i] = generatePositionWithoutPerson(game);
-	//		game->FBI[i] =  generatePositionWithoutPerson(game);
-	//	}
-	//
-	//	for (int i = 0; i < MAX_COUNT; i++)
-	//	    game->doubleAgents[i] = NULL;
-	//
-	//	return true;
+		if (width * height < 3 * level + 1 || width < -1) {
+			return false;
+		}
+	
+		// Initialize the game parameters (width, height, level, moveCount and touchWithRussianAgentsCount)
+		game->setWidth(width);
+		game->setHeight(height);
+		game->setLevel(level);
+		game->setMoveCount(0);
+		game->setTouchWithRussianAgentsCount(0);
+		game->setFBIHidingProbability(0.0);
+	
+	
+		// Initialize trump at the bottom-left corner
+		Trump* trump = new Trump();
+		PersonPosition trumpPos = PersonPosition(0, game->getHeight()-1);
+		trump->setCoordinates(trumpPos);
+		game->setTrump(trump);
+	
+	
+		// Initialize ALL russianAgents, media and FBI to be of null position
+		RussianArray* ra = new RussianArray(game->getLevel());
+		ra->initialize();
+		game->setRussianArray(ra);
+		FBIArray* fa = new FBIArray(game->getLevel());
+		fa->initialize();
+		game->setFBIArray(fa);
+		MediaArray* ma = new MediaArray(game->getLevel());
+		ma->initialize();
+		game->setMediaArray(ma); 
+	
+		
+		// Assign random position by calling generatePositionWithoutPerson(...)
+		for (int i = 0; i < game->getLevel(); ++i) {
+			game->getRussianArray()->getRussianAgent(i)->setCoordinates(generatePositionWithoutPerson(game));
+			game->getFBIArray()->getFBIAgent(i)->setCoordinates(generatePositionWithoutPerson(game));
+			game->getMediaArray()->getMediaReporter(i)->setCoordinates(generatePositionWithoutPerson(game));
+		}
+	
+		for (int i = 0; i < MAX_COUNT; i++)
+		    game->setDoubleAgentAtIndex(i, NULL);
+	
+		return true;
 }
 
 
@@ -101,31 +100,31 @@ bool isSamePosition(const PersonPosition* A, const PersonPosition* B) {
 // TODO: (Task 3) Complete the generatePositionWithoutPerson function
 // (possibly using **recursion**)
 PersonPosition generatePositionWithoutPerson(const Game* game) {
-	//	// Pick a random position in the valid range
-	//	PersonPosition randPosition = {rand() % game->width, rand() % game->height};
-	//	bool isEmptyPosition = true;
-	//
-	//	// Check if randPosition overlap with trump
-	//	if (isSamePosition(&randPosition, &game->trump)) {
-	//		isEmptyPosition = false;
-	//	}
-	//
-	//	// Check if randPosition overlap with others
-	//	for (int i = 0; i < game->level; ++i) {
-	//		if (isSamePosition(&randPosition, game->russianAgents[i])
-	//		|| isSamePosition(&randPosition, &game->media[i])
-	//		|| isSamePosition(&randPosition, &game->FBI[i])
-	//		) {
-	//			isEmptyPosition = false;
-	//		}
-	//	}
-	//
-	//	if (isEmptyPosition) {
-	//		return randPosition;
-	//	} else {
-	//		// Recursive call to generate a random position again
-	//		return generatePositionWithoutPerson(game);
-	//	}
+		// Pick a random position in the valid range
+		PersonPosition randPosition = PersonPosition(rand() % game->getWidth(), rand() % game->getHeight());
+		bool isEmptyPosition = true;
+	
+		// Check if randPosition overlap with trump
+		if (isSamePosition(&randPosition, game->getTrump()->getCoordinates())) {
+			isEmptyPosition = false;
+		}
+	
+		// Check if randPosition overlap with others
+		for (int i = 0; i < game->getLevel(); ++i) {
+			if (isSamePosition(&randPosition, game->getRussianArray()->getRussianAgent(i)->getCoordinates())
+			|| isSamePosition(&randPosition, game->getMediaArray()->getMediaReporter(i)->getCoordinates())
+			|| isSamePosition(&randPosition, game->getFBIArray()->getFBIAgent(i)->getCoordinates())
+			) {
+				isEmptyPosition = false;
+			}
+		}
+	
+		if (isEmptyPosition) {
+			return randPosition;
+		} else {
+			// Recursive call to generate a random position again
+			return generatePositionWithoutPerson(game);
+		}
 }
 
 
@@ -156,60 +155,59 @@ string progressBar(int count, int total) {
  */
 
 string printGameboard(const Game* game) {
-	//	string output = "";
-	//	// Print the level
-	//	output += "Level " + unsignedIntToString(game->level) + "\t\t";
-	//	// Print the number of moves
-	//	output += "Move: " + unsignedIntToString(game->moveCount) + "\t\t";
-	//	// Print the progress bar of the move count that trump made contact with a Russian agent
-	//	output += progressBar(game->touchWithRussianAgentsCount, TOUCH_COUNT_FOR_WINNING) + "\n";
-	//	bool isFBIVisible[MAX_COUNT];
-	//
-	//	for (int i = 0; i < game->level; i++)
-	//	    isFBIVisible[i] = (rand() >= game->FBIHidingProbability * RAND_MAX);
-	//	for (int i = 0; i < game->height; ++i) {
-	//		for (int j = 0; j < game->width; ++j) {
-	//			// Output '.' if the position is empty
-	//			string outputChar = ".";
-	//			bool trumpHere = false;
-	//		//	PersonPosition currentPos = {j, i};
-	//			PersonPosition currentPos;
-	//			currentPos.x = j; currentPos.y = i;
-	//
-	//			// If trump is at currentPos, the output character becomes 'T'
-	//			// Set trumpHere to be true
-	//			if (isSamePosition(&game->trump, &currentPos)) {
-	//				trumpHere = true;
-	//				outputChar = "T";
-	//			}
-	//			// Check all other people if they are at currentPos
-	//			// Change the output character if so
-	//
-	//			// Precedence: 'T' < 'R' < 'M' < 'F'
-	//			// E.g., if 'R' and 'F' are in the same position, show 'F' only
-	//			for (int k = 0; k < game->level; ++k) {
-	//				if (isSamePosition(&game->FBI[k], &currentPos) && isFBIVisible[k]) {
-	//					outputChar = "F";
-	//				} else if (isSamePosition(&game->media[k], &currentPos) && outputChar != "F") {
-	//					outputChar = "M";
-	//				} else if (isSamePosition(game->russianAgents[k], &currentPos)
-	//					&& outputChar != "M" && outputChar != "F") {
-	//					outputChar = "R";
-	//				}
-	//			}
-	//			// The output character is bounded by '*' if trump is here
-	//			if (!trumpHere) {
-	//				output += " " + outputChar + " ";
-	//			} else {
-	//				output += "*" + outputChar + "*";
-	//			}
-	//
-	//		}
-	//		output += "\n";
-	//	}
-	//	output += "\n";
-	//
-	//	return output;
+		string output = "";
+		// Print the level
+		output += "Level " + unsignedIntToString(game->getLevel()) + "\t\t";
+		// Print the number of moves
+		output += "Move: " + unsignedIntToString(game->getMoveCount()) + "\t\t";
+		// Print the progress bar of the move count that trump made contact with a Russian agent
+		output += progressBar(game->getTouchWithRussianAgentsCount(), TOUCH_COUNT_FOR_WINNING) + "\n";
+		bool isFBIVisible[MAX_COUNT];
+	
+		for (int i = 0; i < game->getLevel(); i++)
+		    isFBIVisible[i] = (rand() >= game->getFBIHidingProbability() * RAND_MAX);
+		for (int i = 0; i < game->getHeight(); ++i) {
+			for (int j = 0; j < game->getWidth(); ++j) {
+				// Output '.' if the position is empty
+				string outputChar = ".";
+				bool trumpHere = false;
+			//	PersonPosition currentPos = {j, i};
+				PersonPosition currentPos = PersonPosition(j,i);
+	
+				// If trump is at currentPos, the output character becomes 'T'
+				// Set trumpHere to be true
+				if (isSamePosition(game->getTrump()->getCoordinates(), &currentPos)) {
+					trumpHere = true;
+					outputChar = "T";
+				}
+				// Check all other people if they are at currentPos
+				// Change the output character if so
+	
+				// Precedence: 'T' < 'R' < 'M' < 'F'
+				// E.g., if 'R' and 'F' are in the same position, show 'F' only
+				for (int k = 0; k < game->getLevel(); ++k) {
+					if (isSamePosition(game->getFBIArray()->getFBIAgent(k)->getCoordinates(), &currentPos) && isFBIVisible[k]) {
+						outputChar = "F";
+					} else if (isSamePosition(game->getMediaArray()->getMediaReporter(k)->getCoordinates(), &currentPos) && outputChar != "F") {
+						outputChar = "M";
+					} else if (isSamePosition(game->getRussianArray()->getRussianAgent(k)->getCoordinates(), &currentPos)
+						&& outputChar != "M" && outputChar != "F") {
+						outputChar = "R";
+					}
+				}
+				// The output character is bounded by '*' if trump is here
+				if (!trumpHere) {
+					output += " " + outputChar + " ";
+				} else {
+					output += "*" + outputChar + "*";
+				}
+	
+			}
+			output += "\n";
+		}
+		output += "\n";
+	
+		return output;
 }
 
 
@@ -284,8 +282,8 @@ void trumpMove(Game* game, char input) {
  * and then move the person accordingly
  */
 void wander(Game* game, PersonPosition* pos) {
-	//	Movement movement = (Movement)(rand() % 5);
-	//	personMove(game, pos, movement);
+	Movement movement = (Movement)(rand() % 5);
+	personMove(game, pos, movement);
 }
 
 
@@ -296,13 +294,13 @@ void wander(Game* game, PersonPosition* pos) {
  * If the Manhattan distance between a Russian agent is <= 2, the agent will not move
  */
 void wander(Game* game) {
-	//	for (int i = 0; i < game->level; ++i) {
-	//		if (calculateManhattanDistance(game->russianAgents[i], &game->trump) >= 3) {
-	//			wander(game, game->russianAgents[i]);
-	//		}
-	//		wander(game, &game->media[i]);
-	//		wander(game, &game->FBI[i]);
-	//	}
+		for (int i = 0; i < game->getLevel(); ++i) {
+			if (calculateManhattanDistance(game->getRussianArray()->getRussianAgent(i)->getCoordinates(), game->getTrump()->getCoordinates()) >= 3) {
+				wander(game, game->getRussianArray()->getRussianAgent(i)->getCoordinates());
+			}
+			wander(game, game->getMediaArray()->getMediaReporter(i)->getCoordinates());
+			wander(game, game->getFBIArray()->getFBIAgent(i)->getCoordinates());
+		}
 }
 
 
@@ -312,7 +310,7 @@ void wander(Game* game) {
  * @brief Calculate the Manhattan distance between position A and B
  */
 int calculateManhattanDistance(const PersonPosition* A, const PersonPosition* B) {
-	//	return abs(A->x - B->x) + abs(A->y - B->y);
+		return abs(A->getX() - B->getX()) + abs(A->getY() - B->getY());
 }
 
 
@@ -322,87 +320,87 @@ int calculateManhattanDistance(const PersonPosition* A, const PersonPosition* B)
  * @brief Check the game result
  */
 GameResult gameCheck(Game* game) {
-	//	bool isTouchWithRussianAgents = false;
-	//	bool isTouchWithMediaOrFBI = false;
-	//	bool isTouchWithDoubleAgent = false;
-	//	// Check if trump touches others
-	//	for (int i = 0; i < game->level; ++i) {
-	//		if (isSamePosition(&game->trump, game->russianAgents[i])) {
-	//			isTouchWithRussianAgents = true;
-	//		}
-	//		if (isSamePosition(&game->trump, &game->media[i])) {
-	//			isTouchWithMediaOrFBI = true;
-	//		}
-	//		if (isSamePosition(&game->trump, &game->FBI[i])) {
-	//			isTouchWithMediaOrFBI = true;
-	//		}
-	//		if (game->doubleAgents[i] != NULL && isSamePosition(&game->trump, game->doubleAgents[i])) {
-	//			isTouchWithDoubleAgent = true;
-	//		}
-	//	}
-	//	// Game over if you meet a double agent.
-	//	if (isTouchWithDoubleAgent) {
-	//	    return GameOver;
-	//	}
-	//
-	//
-	//	// Game over if touch with media or FBI while you are touching with Russian Agents
-	//	if (isTouchWithMediaOrFBI && isTouchWithRussianAgents) {
-	//		return GameOver;
-	//	}
-	//
-	//	// Check if trump touches Russian Agents (increment or reset it accordingly)
-	//	if (isTouchWithRussianAgents) {
-	//		game->touchWithRussianAgentsCount++;
-	//	} else {
-	//		// Reset
-	//		game->touchWithRussianAgentsCount = 0;
-	//	}
-	//
-	//	// Stage clear if the touch count reaches TOUCH_COUNT_FOR_WINNING (i.e., 3)
-	//	if (game->touchWithRussianAgentsCount >= TOUCH_COUNT_FOR_WINNING) {
-	//		return GameStageClear;
-	//	}
-	//
-	//
-	//	// check if a FBI is contacting a russian agent alone
-	//	for (int i = 0; i < game->level ; i++) {
-	//	    PersonPosition p = game->FBI[i];
-	//	    PersonPosition* agent = NULL;
-	//	    for (int j = 0; j < game->level; j++) {
-	//		if (isSamePosition(&p, game->russianAgents[j]))
-	//		    agent = game->russianAgents[j];
-	//	    }
-	//	    if (agent == NULL)
-	//		continue;
-	//	    //check how many people in this cell
-	//	    int people = 0;
-	//	    for (int j = 0; j < game->level; j++) {
-	//		if (isSamePosition(&p, &game->FBI[j]))
-	//		    people++;
-	//		if (isSamePosition(&p, &game->media[j]))
-	//		    people++;
-	//		if (isSamePosition(&p, game->russianAgents[j]))
-	//		    people++;
-	//		//no need to check trump as he will be caught earlier
-	//	    }
-	//	    if (people != 2) //they are not alone
-	//		continue;
-	//	    bool addedBefore = false;
-	//	    int c;
-	//	    for (c = 0; c < MAX_COUNT && game->doubleAgents[c] != NULL; c++) {
-	//		if (game->doubleAgents[c] == agent) {  //added before
-	//		    addedBefore = true;
-	//		    break;
-	//		}
-	//	    }
-	//	    if (!addedBefore) {
-	//		game->doubleAgents[c] = agent;
-	//	    }
-	//
-	//	}
-	//
-	//	return GameContinue;
+		bool isTouchWithRussianAgents = false;
+		bool isTouchWithMediaOrFBI = false;
+		bool isTouchWithDoubleAgent = false;
+		// Check if trump touches others
+		for (int i = 0; i < game->getLevel(); ++i) {
+			if (isSamePosition(game->getTrump()->getCoordinates(),game->getRussianArray()->getRussianAgent(i)->getCoordinates())){
+				isTouchWithRussianAgents = true;
+			}
+			if (isSamePosition(game->getTrump()->getCoordinates(),game->getMediaArray()->getMediaReporter(i)->getCoordinates())){
+				isTouchWithMediaOrFBI = true;
+			}
+			if (isSamePosition(game->getTrump()->getCoordinates(),game->getFBIArray()->getFBIAgent(i)->getCoordinates())){
+				isTouchWithMediaOrFBI = true;
+			}
+			if (game->getDoubleAgentAtIndex(i) != NULL && isSamePosition(game->getTrump()->getCoordinates(), game->getDoubleAgentAtIndex(i))) {
+				isTouchWithDoubleAgent = true;
+			}
+		}
+		// Game over if you meet a double agent.
+		if (isTouchWithDoubleAgent) {
+		    return GameOver;
+		}
+
+
+		// Game over if touch with media or FBI while you are touching with Russian Agents
+		if (isTouchWithMediaOrFBI && isTouchWithRussianAgents) {
+			return GameOver;
+		}
+
+		// Check if trump touches Russian Agents (increment or reset it accordingly)
+		if (isTouchWithRussianAgents) {
+			game->setTouchWithRussianAgentsCount(game->getTouchWithRussianAgentsCount()+1);
+		} else {
+			// Reset
+			game->setTouchWithRussianAgentsCount(0);
+		}
+
+		// Stage clear if the touch count reaches TOUCH_COUNT_FOR_WINNING (i.e., 3)
+		if (game->getTouchWithRussianAgentsCount() >= TOUCH_COUNT_FOR_WINNING) {
+			return GameStageClear;
+		}
+
+
+		// check if a FBI is contacting a russian agent alone
+		for (int i = 0; i < game->getLevel() ; i++) {
+		    PersonPosition* p = game->getFBIArray()->getFBIAgent(i)->getCoordinates();
+		    PersonPosition* agent = NULL;
+		    for (int j = 0; j < game->getLevel(); j++) {
+			if (isSamePosition(p, game->getRussianArray()->getRussianAgent(j)->getCoordinates()))
+			    agent = game->getRussianArray()->getRussianAgent(j)->getCoordinates();
+		    }
+		    if (agent == NULL)
+			continue;
+		    //check how many people in this cell
+		    int people = 0;
+		    for (int j = 0; j < game->getLevel(); j++) {
+			if (isSamePosition(p, game->getFBIArray()->getFBIAgent(j)->getCoordinates()))
+			    people++;
+			if (isSamePosition(p, game->getMediaArray()->getMediaReporter(j)->getCoordinates()))
+			    people++;
+			if (isSamePosition(p, game->getRussianArray()->getRussianAgent(j)->getCoordinates()))
+			    people++;
+			//no need to check trump as he will be caught earlier
+		    }
+		    if (people != 2) //they are not alone
+			continue;
+		    bool addedBefore = false;
+		    int c;
+		    for (c = 0; c < MAX_COUNT && game->getDoubleAgentAtIndex(c) != NULL; c++) {
+			if (game->getDoubleAgentAtIndex(c) == agent) {  //added before
+			    addedBefore = true;
+			    break;
+			}
+		    }
+		    if (!addedBefore) {
+		    game->setDoubleAgentAtIndex(c,agent);
+		    }
+
+		}
+
+		return GameContinue;
 }
 
 

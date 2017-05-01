@@ -7,7 +7,7 @@
 
 #include "FBIArray.h"
 #include "lab10.h"
-
+#define NULL_POSITION -1
 FBIArray::FBIArray(int n)
 {
 	fp = new FBIAgent[n];

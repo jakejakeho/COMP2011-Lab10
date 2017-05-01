@@ -14,6 +14,10 @@
 #include "MediaArray.h"
 #include "FBIArray.h"
 #include "Person.h"
+#define MAX_COUNT 					10
+#define	NULL_POSITION				-1
+#define TOUCH_COUNT_FOR_WINNING		5
+#define	LEVEL_TO_WIN				10
 
 typedef Person Trump;
 

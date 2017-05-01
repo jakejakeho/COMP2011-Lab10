@@ -435,6 +435,7 @@ void lab10ProgramCheck() {
 
 			if (raAllSame || mAllSame || fAllSame) {
 				taskCheckWrong[7] = true;
+				cout<<"a"<<endl;
 			}
 
 			// Check if an RA stay when Trump is nearby
